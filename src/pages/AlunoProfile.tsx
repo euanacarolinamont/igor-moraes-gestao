@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import type { Aluno, Agendamento, Receita } from '../lib/supabase'
-import { ArrowLeft, User, Pencil, X, Check } from 'lucide-react'
+import { ArrowLeft, User, Pencil, X, Check, Trash2 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 
 type Tab = 'dados' | 'agendamentos' | 'financeiro' | 'servicos'
@@ -37,6 +37,10 @@ export default function AlunoProfile() {
   const [saving, setSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [editForm, setEditForm] = useState<Partial<Aluno>>({})
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   useEffect(() => { if (id) fetchData(id) }, [id])
 
@@ -100,6 +104,28 @@ export default function AlunoProfile() {
     if (data) setAluno(data)
     setEditing(false)
     setSaving(false)
+  }
+
+  async function handleDeleteAluno() {
+    if (!aluno) return
+    setDeleting(true)
+    setDeleteError('')
+
+    const { error: agendErr } = await supabase
+      .from('agendamentos')
+      .delete()
+      .eq('aluno_id', aluno.id)
+
+    if (agendErr) { setDeleteError(agendErr.message); setDeleting(false); return }
+
+    const { error: alunoErr } = await supabase
+      .from('alunos')
+      .delete()
+      .eq('id', aluno.id)
+
+    if (alunoErr) { setDeleteError(alunoErr.message); setDeleting(false); return }
+
+    navigate('/alunos')
   }
 
   const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
@@ -170,12 +196,20 @@ export default function AlunoProfile() {
               <p className="text-white font-medium">{fmtDate(aluno.data_vencimento)}</p>
             </div>
             {!editing && (
-              <button
-                onClick={startEdit}
-                className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded bg-surface-2 hover:bg-border text-gray-300 hover:text-white border border-border transition-colors"
-              >
-                <Pencil size={13} /> Editar
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={startEdit}
+                  className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded bg-surface-2 hover:bg-border text-gray-300 hover:text-white border border-border transition-colors"
+                >
+                  <Pencil size={13} /> Editar
+                </button>
+                <button
+                  onClick={() => { setShowDeleteModal(true); setDeleteError('') }}
+                  className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded bg-red-900/30 hover:bg-red-900/50 text-red-400 hover:text-red-300 border border-red-900/50 transition-colors"
+                >
+                  <Trash2 size={13} /> Excluir aluno
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -450,6 +484,49 @@ export default function AlunoProfile() {
           )}
         </div>
       )}
+
+      {/* Modal de confirmação de exclusão */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md mx-4 p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-900/30 border border-red-900/50 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={18} className="text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-semibold text-lg">Excluir aluno</h2>
+                <p className="text-gray-400 text-sm">Esta ação não pode ser desfeita</p>
+              </div>
+            </div>
+
+            <p className="text-gray-300 text-sm">
+              Tem certeza que deseja excluir <span className="text-white font-medium">{aluno.nome} {aluno.sobrenome}</span>?
+              Todos os agendamentos deste aluno também serão excluídos. Os registros financeiros serão mantidos.
+            </p>
+
+            {deleteError && (
+              <div className="bg-red-900/20 border border-red-800 rounded px-3 py-2 text-red-400 text-sm">{deleteError}</div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteError('') }}
+                disabled={deleting}
+                className="btn-secondary flex-1 justify-center"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAluno}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded bg-red-700 hover:bg-red-600 text-white text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? 'Excluindo...' : <><Trash2 size={14} /> Excluir</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
-}
+}add delete student button
