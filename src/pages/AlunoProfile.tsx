@@ -529,4 +529,4 @@ export default function AlunoProfile() {
       )}
     </div>
   )
-}add delete student button
+}
