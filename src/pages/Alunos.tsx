@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import type { Aluno } from '../lib/supabase'
 import { Search, Plus, Upload, Download, Filter, User, X } from 'lucide-react'
 import Drawer from '../components/Drawer'
-import { format, addDays, parseISO } from 'date-fns'
+import { format, addDays, parseISO, parse, isValid } from 'date-fns'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -12,6 +12,24 @@ import autoTable from 'jspdf-autotable'
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return '—'
   try { return format(parseISO(iso), 'dd/MM/yyyy') } catch { return iso }
+}
+
+function parseImportDate(value: string): string | null {
+  const v = String(value ?? '').trim()
+  if (!v) return null
+  if (/^\d{5}(\.\d+)?$/.test(v)) {
+    const date = new Date(Math.round((parseFloat(v) - 25569) * 86400 * 1000))
+    return isNaN(date.getTime()) ? null : format(date, 'yyyy-MM-dd')
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const d = parseISO(v)
+    return isValid(d) ? v : null
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
+    const d = parse(v, 'dd/MM/yyyy', new Date())
+    return isValid(d) ? format(d, 'yyyy-MM-dd') : null
+  }
+  return null
 }
 
 const SERVICOS = [
@@ -200,12 +218,12 @@ export default function Alunos() {
       telefone: getVal(row, 'telefone'),
       email: getVal(row, 'email'),
       genero: (getVal(row, 'genero') || 'Masculino') as Aluno['genero'],
-      data_nascimento: getVal(row, 'data_nascimento') || null,
+      data_nascimento: parseImportDate(getVal(row, 'data_nascimento')),
       foto_url: null,
       servico_contratado: getVal(row, 'servico_contratado') || SERVICOS[0],
       status: (getVal(row, 'status') || 'Ativo') as Aluno['status'],
-      data_inicio: getVal(row, 'data_inicio') || format(new Date(), 'yyyy-MM-dd'),
-      data_vencimento: getVal(row, 'data_vencimento') || format(addDays(new Date(), 90), 'yyyy-MM-dd'),
+      data_inicio: parseImportDate(getVal(row, 'data_inicio')) ?? format(new Date(), 'yyyy-MM-dd'),
+      data_vencimento: parseImportDate(getVal(row, 'data_vencimento')) ?? format(addDays(new Date(), 90), 'yyyy-MM-dd'),
       observacoes: getVal(row, 'observacoes') || null,
     })).filter(r => r.nome)
 
