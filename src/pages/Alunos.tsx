@@ -187,7 +187,7 @@ export default function Alunos() {
         if (result == null) { alert('Arquivo vazio.'); return }
         const wb = XLSX.read(result, { type: typeof result === 'string' ? 'binary' : 'array' })
         const ws = wb.Sheets[wb.SheetNames[0]]
-        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' })
+        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '', raw: false })
         if (rows.length === 0) { alert('Nenhuma linha encontrada no arquivo.'); return }
         const headers = Object.keys(rows[0])
         const columns = headers.map(h => ({ header: h, preview: String(rows[0][h] ?? '') }))
