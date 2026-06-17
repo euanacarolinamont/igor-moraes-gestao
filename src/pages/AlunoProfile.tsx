@@ -15,17 +15,25 @@ function fmtDate(iso: string | null | undefined) {
 }
 
 function parseImportDate(value: string): string | null {
-  const v = value.trim()
+  const v = String(value ?? '').trim()
   if (!v) return null
+  // Número serial do Excel (ex: 46272.99)
+  if (/^\d{5}(\.\d+)?$/.test(v)) {
+    const date = new Date(Math.round((parseFloat(v) - 25569) * 86400 * 1000))
+    return isNaN(date.getTime()) ? null : format(date, 'yyyy-MM-dd')
+  }
+  // Formato yyyy-MM-dd
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const d = parseISO(v)
     return isValid(d) ? v : null
   }
+  // Formato dd/MM/yyyy
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(v)) {
     const d = parse(v, 'dd/MM/yyyy', new Date())
     return isValid(d) ? format(d, 'yyyy-MM-dd') : null
   }
   return null
+}
 }
 
 const SERVICOS = [
