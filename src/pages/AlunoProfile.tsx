@@ -34,7 +34,6 @@ function parseImportDate(value: string): string | null {
   }
   return null
 }
-}
 
 const SERVICOS = [
   'Consultoria Online',
