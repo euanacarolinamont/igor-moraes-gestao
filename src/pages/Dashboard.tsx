@@ -94,7 +94,7 @@ export default function Dashboard() {
     const saldosPendentes = (saldosRes.data ?? []) as (Receita & { aluno?: Aluno })[]
 
     const ativos = alunos.filter(a => a.status === 'Ativo')
-    const vencidos = alunos.filter(a => a.data_vencimento && a.data_vencimento < today)
+    const vencidos = ativos.filter(a => a.data_vencimento && a.data_vencimento < today)
 
     // Alunos com agendamento futuro (data >= hoje) — excluídos das renovações
     const alunosComAgendFuturo = new Set(
