@@ -15,12 +15,8 @@ function fmtDate(iso: string | null | undefined) {
 }
 
 function parseImportDate(value: string): string | null {
-  const v = String(value ?? '').trim()
+  const v = value.trim()
   if (!v) return null
-  if (/^\d{5}(\.\d+)?$/.test(v)) {
-    const date = new Date(Math.round((parseFloat(v) - 25569) * 86400 * 1000))
-    return isNaN(date.getTime()) ? null : format(date, 'yyyy-MM-dd')
-  }
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const d = parseISO(v)
     return isValid(d) ? v : null
@@ -127,6 +123,12 @@ export default function Alunos() {
 
   useEffect(() => { fetchAlunos() }, [])
 
+  useEffect(() => {
+    setFilterStatus(searchParams.get('status') ?? '')
+    setVencDe(searchParams.get('vencDe') ?? '')
+    setVencAte(searchParams.get('vencAte') ?? '')
+  }, [searchParams])
+
   async function fetchAlunos() {
     setLoading(true)
     setFetchError('')
@@ -187,7 +189,7 @@ export default function Alunos() {
         if (result == null) { alert('Arquivo vazio.'); return }
         const wb = XLSX.read(result, { type: typeof result === 'string' ? 'binary' : 'array' })
         const ws = wb.Sheets[wb.SheetNames[0]]
-        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '', raw: false })
+        const rows = XLSX.utils.sheet_to_json<Record<string, string>>(ws, { defval: '' })
         if (rows.length === 0) { alert('Nenhuma linha encontrada no arquivo.'); return }
         const headers = Object.keys(rows[0])
         const columns = headers.map(h => ({ header: h, preview: String(rows[0][h] ?? '') }))
