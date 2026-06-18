@@ -141,6 +141,8 @@ export default function Alunos() {
     setLoading(false)
   }
 
+  const today = format(new Date(), 'yyyy-MM-dd')
+
   const filtered = alunos.filter(a => {
     const q = search.toLowerCase()
     const matchSearch = !q ||
@@ -148,7 +150,11 @@ export default function Alunos() {
       (a.sobrenome ?? '').toLowerCase().includes(q) ||
       (a.email ?? '').toLowerCase().includes(q) ||
       (a.cpf ?? '').includes(q)
-    const matchStatus = !filterStatus || a.status === filterStatus
+    const matchStatus = !filterStatus || (
+      filterStatus === 'Vencido'
+        ? a.status === 'Ativo' && !!a.data_vencimento && a.data_vencimento < today
+        : a.status === filterStatus
+    )
     const matchVencDe = !vencDe || (a.data_vencimento ?? '') >= vencDe
     const matchVencAte = !vencAte || (a.data_vencimento ?? '') <= vencAte
     return matchSearch && matchStatus && matchVencDe && matchVencAte
