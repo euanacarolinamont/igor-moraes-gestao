@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [exportMes, setExportMes] = useState<'atual' | 'proximo' | 'anterior'>('proximo')
 
   const today = format(new Date(), 'yyyy-MM-dd')
+  const yesterday = format(addDays(new Date(), -1), 'yyyy-MM-dd')
   const in30 = format(addDays(new Date(), 30), 'yyyy-MM-dd')
   const in45 = format(addDays(new Date(), 45), 'yyyy-MM-dd')
 
@@ -291,7 +292,7 @@ export default function Dashboard() {
           <p className="text-primary text-xs mt-1">ver lista →</p>
         </div>
 
-        <div className="card cursor-pointer hover:border-primary transition-colors" onClick={() => navigate('/alunos?status=Vencido')}>
+        <div className="card cursor-pointer hover:border-primary transition-colors" onClick={() => navigate(`/alunos?status=Ativo&vencAte=${yesterday}`)}>
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-lg bg-red-900 flex items-center justify-center flex-shrink-0">
               <AlertCircle size={18} className="text-white" />
